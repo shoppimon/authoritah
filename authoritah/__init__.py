@@ -1,8 +1,7 @@
 """Respect my authoritah!
 """
 
-from builtins import str
-from six import iteritems
+from six import iteritems, string_types
 
 
 class Authorizer(object):
@@ -103,7 +102,7 @@ class Role(object):
     """Role representation
     """
     def __init__(self, name, grants, parents=()):
-        if isinstance(parents, str):
+        if isinstance(parents, string_types):
             parents = [parents]
         self.name = name
         self.grants = set(grants)

@@ -9,6 +9,6 @@ setup(
     author_email='shahar@shoppimon.com',
     url='https://bitbucket.org/shoppimon/authoritah',
     packages=find_packages(),
-    install_requires=['six', 'future'],
+    install_requires=['six'],
     tests_require=['pytest']
 )
