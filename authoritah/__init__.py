@@ -102,8 +102,6 @@ class Role(object):
     """Role representation
     """
     def __init__(self, name, grants, parents=()):
-        if isinstance(parents, string_types):
-            parents = [parents]
         self.name = name
         self.grants = set(grants)
         self.parents = set(parents) if parents else set()
@@ -119,9 +117,10 @@ class Role(object):
             return spec
 
         elif isinstance(spec, dict):
-            role = cls(name,
-                       grants=spec.get('grants', []),
-                       parents=spec.get('parents', []))
+            parents = spec.get('parents', [])
+            if isinstance(parents, string_types):
+                parents = [parents]
+            role = cls(name, grants=spec.get('grants', []), parents=parents)
 
         else:
             role = cls(name, grants=spec)
