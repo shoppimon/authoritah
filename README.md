@@ -16,9 +16,13 @@ In simple terms, an identity is a user - an entity using the system (be it a
 person, a machine authenticating with an API key, a default "anonymous" user, 
 etc.)
 
-Identities can have **roles** - in *authoritah*, an identity's roles are usually in 
-relation to a given **context object**, although identities can have default 
-roles as well. 
+Identities can have **roles** - in *authoritah*, an identity's roles are 
+usually in relation to a given **context object**, although identities can have
+default roles as well.
+
+In *authoritah* you are not expected to use a specific structure for identity
+objects - they are opaque as far as the library is concerned, and are only 
+passed around between different callables you provide. 
 
 ### Roles
 A role is given to an identity, and defines a set of **permissions** - actions 

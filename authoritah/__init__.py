@@ -45,28 +45,31 @@ class Authorizer(object):
     def _resolve_roles(self, identity=None, context=None):
         """Resolve user roles given a context object
         """
+        roles = set()
+
         if identity is None and self._identity_provider:
             identity = self._identity_provider()
 
         if identity is None:
-            return []
+            return roles
 
         if context is not None:
             try:
                 types = type(context).mro()
                 for t in types:
                     if t in self._role_providers:
-                        roles = self._role_providers[t](identity, context)
-                        if len(roles) > 0:
-                            return roles
-
+                        roles.update(self._get_roles(self._role_providers[t],
+                                                     identity,
+                                                     context))
             except (AttributeError, TypeError):
                 pass
 
-        if self._default_role_provider is None:
-            return []
-        else:
-            return self._default_role_provider(identity, context)
+        if self._default_role_provider is not None:
+            roles.update(self._get_roles(self._default_role_provider,
+                                         identity,
+                                         context))
+
+        return roles
 
     def _get_permissions(self, roles, stack=None):
         """Get set of permissions for a list of roles
@@ -92,6 +95,19 @@ class Authorizer(object):
             permissions.update(role.grants)
 
         return permissions
+
+    @staticmethod
+    def _get_roles(cb, identity, context):
+        """Get a set of normalized roles from a role provider
+        """
+        roles = cb(identity, context)
+        if not roles or len(roles) == 0:
+            return set()
+
+        if isinstance(roles, string_types):
+            return {roles}
+
+        return set(roles)
 
     @staticmethod
     def _process_permissions(spec):
