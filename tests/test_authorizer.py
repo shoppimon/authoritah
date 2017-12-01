@@ -1,7 +1,7 @@
 from collections import namedtuple
 import pytest
 
-from authoritah import Authorizer
+from authoritah import Authorizer, NotAuthorized
 
 User = namedtuple('User', ['id', 'roles'])
 Article = namedtuple('Article', ['created_by'])
@@ -95,3 +95,33 @@ def test_object_permissions_without_inheritance():
 
     assert az.is_allowed('user_view', other_user)
     assert not az.is_allowed('user_edit', other_user)
+
+
+def test_requires_decorator():
+    az = Authorizer(default_permissions)
+
+    @az.context_role_provider(lambda u, o: 'user_admin' if same_user(u, o) else None)
+    class ProtectedUser(User):
+
+        @az.require('user_view')
+        def view(self):
+            return 'viewed'
+
+        @az.require('user_edit')
+        def edit(self):
+            return 'edited'
+
+    user = ProtectedUser(1234, ['editor'])
+    other_user = ProtectedUser(5678, ['viewer'])
+
+    az.identity_provider(lambda: user)
+    az.default_role_provider(lambda u, _: u.roles)
+
+    # These should all pass with no
+    assert user.view() == 'viewed'
+    assert user.edit() == 'edited'
+    assert other_user.view() == 'viewed'
+
+    # This should throw an exception
+    with pytest.raises(NotAuthorized):
+        other_user.edit()

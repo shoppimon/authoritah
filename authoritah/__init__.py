@@ -1,6 +1,7 @@
 """Respect my authoritah!
 """
 
+from functools import wraps
 from six import iteritems, string_types
 
 
@@ -42,6 +43,32 @@ class Authorizer(object):
             return cls
         return wrap
 
+    def require(self, permission, context_obj=None, error_message=None):
+        """Decorator generator for protecting methods with permission checks
+        """
+        def wrapper(f):
+            if error_message is None:
+                err = "Calling the {} method requires '{}' permission".\
+                    format(f.__name__, permission)
+            else:
+                err = error_message
+
+            @wraps(f)
+            def wrapped(*args, **kwargs):
+                if context_obj is None:
+                    obj = args[0]
+                else:
+                    obj = context_obj
+
+                if self.is_allowed(permission, context=obj):
+                    return f(*args, **kwargs)
+                else:
+                    raise NotAuthorized(err)
+
+            return wrapped
+
+        return wrapper
+
     def _resolve_roles(self, identity=None, context=None):
         """Resolve user roles given a context object
         """
@@ -54,15 +81,20 @@ class Authorizer(object):
             return roles
 
         if context is not None:
+            types = [context]
             try:
-                types = type(context).mro()
-                for t in types:
-                    if t in self._role_providers:
-                        roles.update(self._get_roles(self._role_providers[t],
-                                                     identity,
-                                                     context))
+                types +=  type(context).mro()
             except (AttributeError, TypeError):
                 pass
+
+            for t in types:
+                try:
+                    provider = self._role_providers[t]
+                except (TypeError, KeyError):
+                    continue
+
+                roles.update(self._get_roles(provider, identity, context))
+
 
         if self._default_role_provider is not None:
             roles.update(self._get_roles(self._default_role_provider,
