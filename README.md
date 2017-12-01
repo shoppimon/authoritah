@@ -31,7 +31,7 @@ An identity can have more than one role (for example a user may be both a
 permissions from one or more other roles (for example, a **content_editor** can 
 inherit from **content_viewer**). 
 
-Unlike many other authorization framework, in **authoritah** roles are not
+Unlike many other authorization frameworks, in **authoritah** roles are not
 global (although they can be), but are derived from context - for example a 
 user may be a **content_editor** for all articles, or may be a 
 **content_editor** only for the articles they created, and **content__viewer**
