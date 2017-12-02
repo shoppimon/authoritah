@@ -77,6 +77,47 @@ def test_object_permissions():
     assert az.is_allowed('article_view', other_article)
 
 
+def test_object_permissions_named_provider():
+    az = Authorizer(default_permissions)
+    az.identity_provider(lambda: User(1234, ['editor']))
+    az.default_role_provider(lambda u, _: u.roles)
+
+    @az.context_role_provider('get_roles')
+    class ProtectedArticle(Article):
+        def get_roles(self, user):
+            return ['admin'] if user.id == self.created_by else []
+
+    article = ProtectedArticle(created_by=1234)
+    assert az.is_allowed('article_delete', article)
+    assert az.is_allowed('article_view', article)
+
+    other_article = ProtectedArticle(created_by=5678)
+    assert not az.is_allowed('article_delete', other_article)
+    assert az.is_allowed('article_view', other_article)
+
+
+def test_object_permissions_named_provider_child_class():
+    az = Authorizer(default_permissions)
+    az.identity_provider(lambda: User(1234, ['editor']))
+    az.default_role_provider(lambda u, _: u.roles)
+
+    @az.context_role_provider('get_roles')
+    class ProtectedArticle(Article):
+        def get_roles(self, user):
+            return ['admin'] if user.id == self.created_by else []
+
+    class ChildArticle(ProtectedArticle):
+        pass
+
+    article = ChildArticle(created_by=1234)
+    assert az.is_allowed('article_delete', article)
+    assert az.is_allowed('article_view', article)
+
+    other_article = ChildArticle(created_by=5678)
+    assert not az.is_allowed('article_delete', other_article)
+    assert az.is_allowed('article_view', other_article)
+
+
 def test_object_permissions_without_inheritance():
     az = Authorizer(default_permissions)
 
