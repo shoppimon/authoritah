@@ -77,13 +77,13 @@ You can define your roles and permissions in a configuration file - a `YAML` or
       - user_create
     
     user:
-      inherits: [ 'viewer' ]
+      parents: [ 'viewer' ]
       grants:
         - comment_create
         - comment_upvote
     
     contributor:
-      inherits: [ 'user' ]
+      parents: [ 'user' ]
       grants:
         - article_create
     
@@ -97,8 +97,8 @@ You can define your roles and permissions in a configuration file - a `YAML` or
       - user_edit
       - user_delete
     
-    root:
-      inherits: 
+    super_admin:
+      parents: 
         - contributor
         - content_admin
         - user_admin
@@ -106,10 +106,11 @@ You can define your roles and permissions in a configuration file - a `YAML` or
 Some things to notice: 
 * Each `role` is desitgnated by a unique key (or name), and defines, 
   optionally, a list of permissions (`grants`). 
-* Roles can inherit permissions from other roles
+* Roles can inherit permissions from other roles. This is done by providing
+  a list of inherited roles as `parents`.
 * As a shortcut, you can define a role by simply providing the list of 
-  permissions it grants, skipping the `grants` key. This format works 
-  nicely for roles not inheriting from any other role.
+  permissions it grants, skipping the `grants` key. This format works nicely 
+  for roles not inheriting from any other role.
 
 Most importantly, roles are defined in a very granular way following an
 approach of least possible access. The right way to think of permissions in 
