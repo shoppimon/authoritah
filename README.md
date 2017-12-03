@@ -68,40 +68,40 @@ of roles in relation to objects in the system.
 You can define your roles and permissions in a configuration file - a `YAML` or
 `JSON`, or even a Python `dict`:
 
-    roles:
-      viewer:
-        - article_list
-        - article_view
-        - comment_list
-        - comment_view
-        - user_create
-      
-      user:
-        inherits: [ 'viewer' ]
-        grants:
-          - comment_create
-          - comment_upvote
-      
-      contributor:
-        inherits: [ 'user' ]
-        grants:
-          - article_create
-      
-      content_admin:
-        - comment_edit
-        - comment_delete
-        - article_edit
-        - article_delete
-      
-      user_admin:
-        - user_edit
-        - user_delete
-      
-      root:
-        inherits: 
-          - contributor
-          - content_admin
-          - user_admin
+    ---
+    viewer:
+      - article_list
+      - article_view
+      - comment_list
+      - comment_view
+      - user_create
+    
+    user:
+      inherits: [ 'viewer' ]
+      grants:
+        - comment_create
+        - comment_upvote
+    
+    contributor:
+      inherits: [ 'user' ]
+      grants:
+        - article_create
+    
+    content_admin:
+      - comment_edit
+      - comment_delete
+      - article_edit
+      - article_delete
+    
+    user_admin:
+      - user_edit
+      - user_delete
+    
+    root:
+      inherits: 
+        - contributor
+        - content_admin
+        - user_admin
 
 Some things to notice: 
 * Each `role` is desitgnated by a unique key (or name), and defines, 
@@ -122,11 +122,123 @@ role resolution to elevate a specific user to `content_admin` for specific
 contexts, so they can edit and delete their own articles. 
 
 #### 2. Initialize an Authorizer and hook in identity management
+Everything you will do with *authoritah* begins with creating an an 
+`Authorizer` object. Assuming we read our roles & permissions configuration
+from a YAML file named `authorization.yml`, here is how this is done:
+
+    import yaml
+    from authoritah import Authorizer
+    
+    with open('authorization.yml') as f:
+        roles = yaml.safe_load(f)
+        
+    authz = Authorizer(roles=roles)
+    
+Since *authoritah* is not bound to any authentication or identity 
+management implementation, you will need to tell your Authorizer how to get
+an identity object, and how to get a list of roles from this object. 
+
+The simplest way to do this would be to use two decorator methods of the 
+`Authorizer` object we just created: `authz.identity_provider` and 
+`authz.default_role_provider`:
+
+    @authz.identity_provider
+    def get_current_user(request):
+        """This function returns the current authenticated user object
+        """
+        return request.user
+    
+    
+    @authz.default_role_provider
+    def get_user_roles(user, context=None):
+        """Get roles for the current user. 
+        
+        This function should always accept an identity object (as returned 
+        by the defined identity provider) and return either a list of roles,
+        a string representing a single role, or None for a user with no roles.
+        
+        Note that this function also receives the current context object. It 
+        may be used, if needed, to infer roles - but this is usually not 
+        recommended.  
+        """
+        return user.roles
+
+In most cases these two functions should be very simple - they are just "glue"
+that integrates your existing code with *authoritah*. 
 
 #### 3. Define Context-Specific Role Resolution
+If your system does not require any dynamic role resolution (e.g. permissions 
+are global and are not related to context objects in your case), you can skip 
+this phase and use *authoritah* like you would use any other RBAC library. 
+
+However, in most cases you would like to give users additional roles based on 
+the object they are accessing - the context object. 
+
+This is done using the `authz.context_role_provider` decorator. This decorator
+should be used to decorate classes, specifying how we should get the roles when
+the context object is of a certain type. 
+
+Assume that our CRM has an ORM or entity class that represents an article:
+ 
+    class Article:
+    
+        title = None
+        content = None
+        created_by = None
+
+You can now modify this class to include some authorization related logic, or 
+better yet, create a subclass of it, hence not tying your code directly to 
+*authoritah*:
+        
+    @authz.context_role_provider('user_roles')
+    class ProtectedArticle(Article):
+    
+        def user_roles(self, user):
+            if user.id == self.created_by:
+                return ['content_admin']
+            return []
+
+Thus, we have told our authorizer to call `user_roles` whenever the context 
+object is a `ProtectedArticle` object. The list of roles returned by this 
+callable will be appended to the list of existing global roles the user already
+has. This way, we know that if the user is the creator of the article, they
+should get permissions as if they have the `content_admin` role (meaning they
+can edit and delete the article). 
 
 #### 4. Apply Authorization Checks in Your Code
+Last but very important, start checking for permissions before you perform 
+some operations in your code. 
 
+There are two common ways to do this. One is explicit: 
+
+    def modify_article(article_id, data):
+        """Assume this is your Web framework's handler for article editing
+        """
+        article = DB.article.get(article_id)
+        if not authz.is_allowed('article_edit', article):
+            return 'You are not allowed to edit this article', 401
+         
+        # ... proceed to update the article
+
+The other is using a decorator, which works well for object methods where the
+object is our context object. Let's update our class definition from the 
+previous section:
+
+    @authz.context_role_provider('user_roles')
+    class ProtectedArticle(Article):
+
+        @authz.require('article_edit')
+        def modify(self, new_data):
+            # ... proceed to modify my own attributes
+                
+        def user_roles(self, user):
+            if user.id == self.created_by:
+                return ['content_admin']
+            return []
+
+In the example above, if the user doesn't have the `article_edit` permission,
+calling `modify()` will raise an `authoritah.NotAuthorized` exception, which 
+you will then need to catch and handle. 
 
 ## Background: Why Context-Based Role Resolution?
 In most RBAC / ACL frameworks, each user is given one or more pre-defined 
