@@ -20,10 +20,10 @@ default roles as well.
 
 In *authoritah* you are not expected to use a specific structure for identity
 objects - they are opaque as far as the library is concerned, and are only 
-passed around between different callables you provide. 
+passed around between different callables you provide.
 
 ### Roles
-A role is given to an identity, and defines a set of **permissions** - actions 
+A role is given to an identity, and defines a set of **permissions** - actions
 that the user is allowed to perform on an object or in the system.
 
 An identity can have more than one role (for example a user may be both a 
