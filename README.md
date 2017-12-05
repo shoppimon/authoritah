@@ -38,7 +38,7 @@ user may be a **content_editor** for all articles, or may be a
 for all other articles.
 
 ### Permissions
-Permissions, simply put, are "rights granted to a given identity based on it's
+Permissions, simply put, are "rights granted to a given identity based on its
 roles". For example, someone with a **content_editor** role have the
 **article_edit**, **article_publish** and **article_unpublish** permissions.
 
