@@ -60,7 +60,7 @@ using *authoritah*.
 We'll follow an example of an imaginary, simplified content management system
 with 3 objects: articles, comments and users.
 
-#### 1. Define Roles and Permissions
+### 1. Define Roles and Permissions
 As with any RBAC system, it is recommended to start with defining some roles
 and what permissions they grant. With *Authoritah*, it is recommended to think
 of roles in relation to objects in the system.
@@ -116,14 +116,14 @@ Some things to notice:
 Most importantly, roles are defined in a very granular way following an
 approach of least possible access. The right way to think of permissions in
 *authoritah* is to consider whether someone with the given role should have
-a given permission **under any circumstances** or only in specific contexts.
+a given permission **under all circumstances** or only in specific contexts.
 
 In our example, a `contributor` can create any article, but cannot delete
 any article - only their own articles. Later, we will see how to use dynamic
 role resolution to elevate a specific user to `content_admin` for specific
 contexts, so they can edit and delete their own articles.
 
-#### 2. Initialize an Authorizer and hook in identity management
+### 2. Initialize an Authorizer and hook in identity management
 Everything you will do with *authoritah* begins with creating an an
 `Authorizer` object. Assuming we read our roles & permissions configuration
 from a YAML file named `authorization.yml`, here is how this is done:
@@ -172,7 +172,7 @@ def get_user_roles(user, context=None):
 In most cases these two functions should be very simple - they are just "glue"
 that integrates your existing code with *authoritah*.
 
-#### 3. Define Context-Specific Role Resolution
+### 3. Define Context-Specific Role Resolution
 If your system does not require any dynamic role resolution (e.g. permissions
 are global and are not related to context objects in your case), you can skip
 this phase and use *authoritah* like you would use any other RBAC library.
@@ -211,9 +211,9 @@ object is a `ProtectedArticle` object. The list of roles returned by this
 callable will be appended to the list of existing global roles the user already
 has. This way, we know that if the user is the creator of the article, they
 should get permissions as if they have the `content_admin` role (meaning they
+can edit or delete *this specific article*).
 
-
-#### 4. Apply Authorization Checks in Your Code
+### 4. Apply Authorization Checks in Your Code
 Last but very important, start checking for permissions before you perform
 some operations in your code.
 
@@ -277,13 +277,13 @@ being edited).
 Unfortunately, this has a few major drawbacks:
 * Writing custom assertions quickly becomes cumbersome as permissions become
   more granular and the number of permissions in the system grows.
-* This model forces an aproach of granting roles with the maximal permissions.
+* This model forces an approach of granting roles with the maximal permissions.
   Narrowing down permissions to only apply in specific contexts is an
   afterthought.
 
 ### Enter A New Approach: Context-Based Role Resolution
-With Autoritah, a user's role is not static but changes based on the context
-object - essentially, instead of asking "what is this user's role?", we ask
+With *authoritah*, a user's role is not static but changes based on the context
+object. Essentially, instead of asking "what is this user's role?", we ask
 "what is the user's role given this object?". Once the role is dynamically
 decided, it is very easy to grant or deny permission to perform an action
 without any need of additional assertions.
@@ -292,7 +292,8 @@ In addition, it advocates a process where minimal permissions are granted
 through each role initially. In the right context, a user may have additional
 permissions through additional roles assigned to them.
 
-This, in our opinion, reduces the risk of permissions leakage.
+This, in our opinion, reduces the risk of permissions leakage as it encourages
+a more granular and limited approach to granting permissions.
 
 # License
 Copyright (c) 2017 Shoppimon LTD
