@@ -31,7 +31,7 @@ An identity can have more than one role (for example a user may be both a
 permissions from one or more other roles (for example, a **content_editor** can
 inherit from **content_viewer**).
 
-Unlike many other authorization frameworks, in **authoritah** roles are not
+Unlike many other authorization frameworks, in *authoritah* roles are not
 global (although they can be), but are derived from context - for example a
 user may be a **content_editor** for all articles, or may be a
 **content_editor** only for the articles they created, and **content_viewer**
@@ -49,7 +49,7 @@ with an action.
 ### Context Objects
 The **context object** is the object on which the operation is performed. For
 example, when editing an article the context object is the article. As
-mentioned, in **authoritah** context objects have a more central role than
+mentioned, in *authoritah* context objects have a more central role than
 with many other authorization frameworks - they are taken into account when
 deciding the user's role.
 
