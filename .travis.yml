@@ -22,7 +22,7 @@ install:
   - pip install -r requirements-test.txt .
 
 script:
-  - py.test tests/
+  - py.test --cov=authoritah tests/
 
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
