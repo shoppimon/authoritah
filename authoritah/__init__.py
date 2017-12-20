@@ -1,4 +1,4 @@
 """Respect my authoritah!
 """
 
-from authoritah.authorizer import Authorizer, NotAuthorized
+from authoritah.authorizer import Authorizer, NotAuthorized  # noqa: F401
