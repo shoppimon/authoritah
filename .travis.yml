@@ -22,7 +22,7 @@ install:
   - pip install -r requirements-test.txt .
 
 script:
-  - py.test --cov=authoritah
+  - py.test --cov-report xml --cov=authoritah
 
 after_script:
   - ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code $TRAVIS_TEST_RESULT
