@@ -2,6 +2,7 @@
 """
 
 from functools import wraps
+
 from six import iteritems, string_types
 
 
@@ -83,7 +84,7 @@ class Authorizer(object):
         if context is not None:
             types = [context]
             try:
-                types +=  type(context).mro()
+                types += type(context).mro()
             except (AttributeError, TypeError):
                 pass
 
