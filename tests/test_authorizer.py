@@ -22,10 +22,6 @@ def same_user(user, obj):
     return isinstance(obj, User) and user.id == obj.id
 
 
-def owner_role(user, obj):
-    return 'admin' if user.id == obj.created_by else 'viewer'
-
-
 @pytest.mark.parametrize('role,permission,allowed', [
     ('viewer', 'article_create', False),
     ('viewer', 'article_list', True),
@@ -65,49 +61,48 @@ def test_object_permissions():
     az.identity_provider(lambda: User(1234, ['editor']))
     az.default_role_provider(lambda u, _: u.roles)
 
-    @az.context_role_provider(owner_role)
-    class ProtectedArticle(Article):
-        pass
+    @az.role_provider(Article)
+    def role_provider(user, obj):
+        return 'admin' if user.id == obj.created_by else 'viewer'
 
-    article = ProtectedArticle(created_by=1234)
+    article = Article(created_by=1234)
     assert az.is_allowed('article_delete', article)
     assert az.is_allowed('article_view', article)
 
-    other_article = ProtectedArticle(created_by=5678)
+    other_article = Article(created_by=5678)
     assert not az.is_allowed('article_delete', other_article)
     assert az.is_allowed('article_view', other_article)
 
 
-def test_object_permissions_named_provider():
+def test_object_permissions_set_provider():
     az = Authorizer(default_permissions)
     az.identity_provider(lambda: User(1234, ['editor']))
     az.default_role_provider(lambda u, _: u.roles)
 
-    @az.context_role_provider('get_roles')
-    class ProtectedArticle(Article):
-        def get_roles(self, user):
-            return ['admin'] if user.id == self.created_by else []
+    def get_roles(user, article):
+        return ['admin'] if user.id == article.created_by else []
 
-    article = ProtectedArticle(created_by=1234)
+    az.set_role_provider(for_type=Article, provider=get_roles)
+
+    article = Article(created_by=1234)
     assert az.is_allowed('article_delete', article)
     assert az.is_allowed('article_view', article)
 
-    other_article = ProtectedArticle(created_by=5678)
+    other_article = Article(created_by=5678)
     assert not az.is_allowed('article_delete', other_article)
     assert az.is_allowed('article_view', other_article)
 
 
-def test_object_permissions_named_provider_child_class():
+def test_object_permissions_child_class():
     az = Authorizer(default_permissions)
     az.identity_provider(lambda: User(1234, ['editor']))
     az.default_role_provider(lambda u, _: u.roles)
 
-    @az.context_role_provider('get_roles')
-    class ProtectedArticle(Article):
-        def get_roles(self, user):
-            return ['admin'] if user.id == self.created_by else []
+    @az.role_provider(Article)
+    def get_roles(user, article):
+        return ['admin'] if user.id == article.created_by else []
 
-    class ChildArticle(ProtectedArticle):
+    class ChildArticle(Article):
         pass
 
     article = ChildArticle(created_by=1234)
@@ -122,12 +117,12 @@ def test_object_permissions_named_provider_child_class():
 def test_object_permissions_without_inheritance():
     az = Authorizer(default_permissions)
 
-    @az.context_role_provider(lambda u, o: 'user_admin' if same_user(u, o) else None)
-    class ProtectedUser(User):
-        pass
+    @az.role_provider(User)
+    def role_provider(user, ctx):
+        return 'user_admin' if same_user(user, ctx) else None
 
-    user = ProtectedUser(1234, ['editor'])
-    other_user = ProtectedUser(5678, ['viewer'])
+    user = User(1234, ['editor'])
+    other_user = User(5678, ['viewer'])
 
     az.identity_provider(lambda: user)
     az.default_role_provider(lambda u, _: u.roles)
@@ -139,11 +134,63 @@ def test_object_permissions_without_inheritance():
     assert not az.is_allowed('user_edit', other_user)
 
 
+def test_class_role_provider():
+    az = Authorizer(default_permissions)
+
+    @az.class_role_provider('get_roles')
+    class ProtectedUser(User):
+        def get_roles(self, user):
+            return 'user_admin' if same_user(self, user) else None
+
+    user = ProtectedUser(1234, ['editor'])
+    other_user = ProtectedUser(5678, ['viewer'])
+
+    az.identity_provider(lambda: user)
+    az.default_role_provider(lambda u, _: u.roles)
+
+    # These should all pass with no problem
+    assert az.is_allowed('user_view', user)
+    assert az.is_allowed('user_view', other_user)
+    assert az.is_allowed('user_edit', user)
+
+    # This should not be allowed
+    assert not az.is_allowed('user_edit', other_user)
+
+
+def test_class_role_provider_child_class():
+    az = Authorizer(default_permissions)
+
+    @az.class_role_provider('get_roles')
+    class ProtectedUser(User):
+        def get_roles(self, u):
+            return 'user_admin' if same_user(self, u) else None
+
+    class SpecificUser(ProtectedUser):
+        pass
+
+    user = SpecificUser(1234, ['editor'])
+    other_user = SpecificUser(5678, ['viewer'])
+
+    az.identity_provider(lambda: user)
+    az.default_role_provider(lambda u, _: u.roles)
+
+    # These should all pass with no problem
+    assert az.is_allowed('user_view', user)
+    assert az.is_allowed('user_view', other_user)
+    assert az.is_allowed('user_edit', user)
+
+    # This should not be allowed
+    assert not az.is_allowed('user_edit', other_user)
+
+
 def test_requires_decorator():
     az = Authorizer(default_permissions)
 
-    @az.context_role_provider(lambda u, o: 'user_admin' if same_user(u, o) else None)
+    @az.class_role_provider('get_roles')
     class ProtectedUser(User):
+
+        def get_roles(self, user):
+            return 'user_admin' if same_user(self, user) else None
 
         @az.require('user_view')
         def view(self):

@@ -193,11 +193,28 @@ class Article:
     created_by = None
 ```
 
-You can now modify this class to include some authorization related logic, or
-better yet, create a subclass of it, hence not tying your code directly to
-*authoritah*:
+You can now use a decorator to tell Authoritah that `article_user_roles` is the
+role provider for objects of type `Article`, or any subtype of it:
 ```python
-@authz.context_role_provider('user_roles')
+@authz.role_provider(Article)
+def article_user_roles(article, user):
+    if user.id == article.created_by:
+        return ['content_admin']
+    return []
+```
+
+Thus, we have told our authorizer to call `article_user_roles` whenever the 
+context object is an `Article` object. The list of roles returned by this
+callable will be appended to the list of existing global roles the user already
+has. This way, we know that if the user is the creator of the article, they
+should get permissions as if they have the `content_admin` role (meaning they
+can edit or delete *this specific article*).
+
+Another way of doing this will be to use the `class_role_provider` annotation 
+on a method of the context object class:
+
+ ```python
+@authz.class_role_provider('user_roles')
 class ProtectedArticle(Article):
 
     def user_roles(self, user):
@@ -206,12 +223,8 @@ class ProtectedArticle(Article):
         return []
 ```
 
-Thus, we have told our authorizer to call `user_roles` whenever the context
-object is a `ProtectedArticle` object. The list of roles returned by this
-callable will be appended to the list of existing global roles the user already
-has. This way, we know that if the user is the creator of the article, they
-should get permissions as if they have the `content_admin` role (meaning they
-can edit or delete *this specific article*).
+Note that this case will work only for objects of `ProtectedArticle`, not the 
+original `Article` base class. 
 
 ### 4. Apply Authorization Checks in Your Code
 Last but very important, start checking for permissions before you perform
@@ -229,17 +242,17 @@ def modify_article(article_id, data):
     # ... proceed to update the article
 ```
 The other is using a decorator, which works well for object methods where the
-object is our context object. Let's update our class definition from the
-previous section:
+object is our context object. Let's update our class definition from before:
 
 ```python
-@authz.context_role_provider('user_roles')
+@authz.class_role_provider('user_roles')
 class ProtectedArticle(Article):
 
     @authz.require('article_edit')
     def modify(self, new_data):
         # ... proceed to modify my own attributes
-
+        pass
+        
     def user_roles(self, user):
         if user.id == self.created_by:
             return ['content_admin']
