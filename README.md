@@ -211,8 +211,8 @@ should get permissions as if they have the `content_admin` role (meaning they
 can edit or delete *this specific article*).
 
 Another way of doing this will be to use the `class_role_provider` annotation 
-on a method of the context object class:
-
+on the context object class, providing it a method name on the same class to
+use as a context role provider:
  ```python
 @authz.class_role_provider('user_roles')
 class ProtectedArticle(Article):
@@ -224,7 +224,8 @@ class ProtectedArticle(Article):
 ```
 
 Note that this case will work only for objects of `ProtectedArticle`, not the 
-original `Article` base class. 
+original `Article` base class. However, it *will* work for any class inheriting
+from `ProtectedArticle`. 
 
 ### 4. Apply Authorization Checks in Your Code
 Last but very important, start checking for permissions before you perform
@@ -237,7 +238,7 @@ def modify_article(article_id, data):
     """
     article = DB.article.get(article_id)
     if not authz.is_allowed('article_edit', article):
-        return 'You are not allowed to edit this article', 401
+        return 'You are not allowed to edit this article', 403
 
     # ... proceed to update the article
 ```
