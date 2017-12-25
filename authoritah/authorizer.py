@@ -1,6 +1,5 @@
 """Main authorization API
 """
-
 from functools import wraps
 from six import iteritems, string_types
 
@@ -8,12 +7,14 @@ from six import iteritems, string_types
 class Authorizer(object):
 
     def __init__(self, permissions, identity_provider=None,
-                 default_role_provider=None, allow_by_default=False):
+                 default_role_provider=None):
         self._roles = self._process_permissions(permissions)
         self._identity_provider = identity_provider
         self._default_role_provider = default_role_provider
         self._role_providers = {}
-        self._allow_by_default = allow_by_default
+
+        self.allow_by_default = False
+        self.exc_class = NotAuthorized
 
     def is_allowed(self, permission, context=None, identity=None):
         """Check if user is allowed to perform the specified action
@@ -22,7 +23,7 @@ class Authorizer(object):
             identity = self._identity_provider()
 
         if identity is None:
-            return self._allow_by_default
+            return self.allow_by_default
 
         roles = self._resolve_roles(identity, context=context)
         permissions = self._get_permissions(roles)
@@ -37,9 +38,18 @@ class Authorizer(object):
         self._default_role_provider = f
         return f
 
-    def context_role_provider(self, resolver):
+    def set_role_provider(self, for_type, provider):
+        self._role_providers[for_type] = provider
+
+    def role_provider(self, for_type):
+        def wrap(f):
+            self.set_role_provider(for_type, f)
+            return f
+        return wrap
+
+    def class_role_provider(self, method):
         def wrap(cls):
-            self._role_providers[cls] = resolver
+            self.set_role_provider(cls, method)
             return cls
         return wrap
 
@@ -63,7 +73,7 @@ class Authorizer(object):
                 if self.is_allowed(permission, context=obj):
                     return f(*args, **kwargs)
                 else:
-                    raise NotAuthorized(err)
+                    raise self.exc_class(err)
 
             return wrapped
 
@@ -83,17 +93,16 @@ class Authorizer(object):
         if context is not None:
             types = [context]
             try:
-                types +=  type(context).mro()
+                types += type(context).mro()
             except (AttributeError, TypeError):
                 pass
 
             for t in types:
                 try:
                     provider = self._role_providers[t]
+                    roles.update(self._get_roles(provider, identity, context))
                 except (TypeError, KeyError):
                     continue
-
-                roles.update(self._get_roles(provider, identity, context))
 
         if self._default_role_provider is not None:
             roles.update(self._get_roles(self._default_role_provider,
