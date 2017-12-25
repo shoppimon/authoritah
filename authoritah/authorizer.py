@@ -38,8 +38,8 @@ class Authorizer(object):
         self._default_role_provider = f
         return f
 
-    def context_role_provider(self, resolver):
-        def wrap(cls):
+    def context_role_provider(self, cls):
+        def wrap(resolver):
             self._role_providers[cls] = resolver
             return cls
         return wrap
