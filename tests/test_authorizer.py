@@ -1,9 +1,9 @@
-import logging
 from collections import namedtuple
 
 import pytest
 
 from authoritah import Authorizer, NotAuthorized
+from authoritah.authorizer import NotDefinedError
 
 User = namedtuple('User', ['id', 'roles'])
 Article = namedtuple('Article', ['created_by'])
@@ -218,7 +218,7 @@ def test_requires_decorator():
 
 
 def test_undefined_role():
-    az = Authorizer(default_permissions)
+    az = Authorizer(default_permissions, strict=True)
 
     @az.class_role_provider('get_roles')
     class ProtectedUser(User):
@@ -228,7 +228,7 @@ def test_undefined_role():
     user = ProtectedUser(1234, ['non-existing-role-name'])
     az.identity_provider(lambda: user)
     az.default_role_provider(lambda u, _: u.roles)
-    assert not az.is_allowed('user_view', user)
-    logger = logging.getLogger('authoritah.authorizer')
-    logger.setLevel(logging.DEBUG)
-    assert not az.is_allowed('non-existing-permission', user)
+    with pytest.raises(NotDefinedError):
+        assert not az.is_allowed('non-existing-permission', user)
+    with pytest.raises(NotDefinedError):
+        assert not az.is_allowed('user_view', user)

@@ -33,7 +33,7 @@ class Authorizer(object):
         if self.strict and permission not in permissions:
             all_permissions = self._get_permissions(self._roles.keys())
             if permission not in all_permissions:
-                raise Exception('Permission %s not defined in any role' % permission)
+                raise NotDefinedError('Permission %s not defined in any role' % permission)
 
         return permission in permissions
 
@@ -127,7 +127,7 @@ class Authorizer(object):
         for role in roles:
             if role not in self._roles:
                 if self.strict:
-                    raise Exception('Role %s not defined in roles' % role)
+                    raise NotDefinedError('Role %s not defined in roles' % role)
                 continue
             role = self._roles[role]
 
@@ -198,4 +198,8 @@ class Role(object):
 
 
 class NotAuthorized(RuntimeError):
+    pass
+
+
+class NotDefinedError(Exception):
     pass
