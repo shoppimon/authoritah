@@ -123,6 +123,7 @@ class Authorizer(object):
         for role in roles:
             if role not in self._roles:
                 self.logger.warning('Role %s not defined in roles', role)
+                continue
             role = self._roles[role]
 
             if len(role.parents) > 0:
