@@ -1,5 +1,6 @@
 """Main authorization API
 """
+import logging
 from functools import wraps
 
 from six import iteritems, string_types
@@ -16,6 +17,7 @@ class Authorizer(object):
 
         self.allow_by_default = False
         self.exc_class = NotAuthorized
+        self.logger = logging.getLogger(__name__)
 
     def is_allowed(self, permission, context=None, identity=None):
         """Check if user is allowed to perform the specified action
@@ -120,7 +122,7 @@ class Authorizer(object):
         permissions = set()
         for role in roles:
             if role not in self._roles:
-                continue
+                self.logger.warning('Role %s not defined in roles', role)
             role = self._roles[role]
 
             if len(role.parents) > 0:
