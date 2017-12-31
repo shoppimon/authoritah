@@ -229,6 +229,6 @@ def test_undefined_role():
     az.identity_provider(lambda: user)
     az.default_role_provider(lambda u, _: u.roles)
     with pytest.raises(NotDefinedError):
-        assert not az.is_allowed('non-existing-permission', user)
+        az.is_allowed('non-existing-permission', user)
     with pytest.raises(NotDefinedError):
-        assert not az.is_allowed('user_view', user)
+        az.is_allowed('user_view', user)
