@@ -46,6 +46,17 @@ Implementing authorization checks in a system normally involves checking
 whether the user has one or more permissions granted to them before proceeding
 with an action.
 
+### Strict Mode:
+The Authorizer class may be instantiated with strict=True (defaults to False).
+
+Strict mode can raise exceptions in two cases:
+
+* If is_allowed is called for a permission not defined in any of the roles defined.
+* If a role in the identity provided to is_allowed is not defined
+
+This is useful to check if one forgot to add a role or permission.
+
+
 ### Context Objects
 The **context object** is the object on which the operation is performed. For
 example, when editing an article the context object is the article. As

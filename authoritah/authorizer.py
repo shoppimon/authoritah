@@ -1,6 +1,5 @@
 """Main authorization API
 """
-import logging
 from functools import wraps
 
 from six import iteritems, string_types
@@ -9,7 +8,7 @@ from six import iteritems, string_types
 class Authorizer(object):
 
     def __init__(self, permissions, identity_provider=None,
-                 default_role_provider=None):
+                 default_role_provider=None, strict=True):
         self._roles = self._process_permissions(permissions)
         self._identity_provider = identity_provider
         self._default_role_provider = default_role_provider
@@ -17,7 +16,7 @@ class Authorizer(object):
 
         self.allow_by_default = False
         self.exc_class = NotAuthorized
-        self.logger = logging.getLogger(__name__)
+        self.strict = strict
 
     def is_allowed(self, permission, context=None, identity=None):
         """Check if user is allowed to perform the specified action
@@ -31,10 +30,10 @@ class Authorizer(object):
         roles = self._resolve_roles(identity, context=context)
         permissions = self._get_permissions(roles)
 
-        if self.logger.isEnabledFor(logging.DEBUG) and permission not in permissions:
+        if self.strict and permission not in permissions:
             all_permissions = self._get_permissions(self._roles.keys())
             if permission not in all_permissions:
-                self.logger.debug('Permission %s not defined in any role', permission)
+                raise Exception('Permission %s not defined in any role' % permission)
 
         return permission in permissions
 
@@ -127,7 +126,8 @@ class Authorizer(object):
         permissions = set()
         for role in roles:
             if role not in self._roles:
-                self.logger.warning('Role %s not defined in roles', role)
+                if self.strict:
+                    raise Exception('Role %s not defined in roles' % role)
                 continue
             role = self._roles[role]
 
