@@ -31,6 +31,11 @@ class Authorizer(object):
         roles = self._resolve_roles(identity, context=context)
         permissions = self._get_permissions(roles)
 
+        if self.logger.isEnabledFor(logging.DEBUG) and permission not in permissions:
+            all_permissions = self._get_permissions(self._roles.keys())
+            if permission not in all_permissions:
+                self.logger.debug('Permission %s not defined in any role', permission)
+
         return permission in permissions
 
     def identity_provider(self, f):
