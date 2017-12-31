@@ -8,7 +8,7 @@ from six import iteritems, string_types
 class Authorizer(object):
 
     def __init__(self, permissions, identity_provider=None,
-                 default_role_provider=None, strict=True):
+                 default_role_provider=None, strict=False):
         self._roles = self._process_permissions(permissions)
         self._identity_provider = identity_provider
         self._default_role_provider = default_role_provider
