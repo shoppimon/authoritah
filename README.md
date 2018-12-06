@@ -78,6 +78,7 @@ of roles in relation to objects in the system.
 
 You can define your roles and permissions in a configuration file - a `YAML` or
 `JSON`, or even a Python `dict`:
+
 ```YAML
   ---
   viewer:
@@ -146,7 +147,7 @@ from authoritah import Authorizer
 with open('authorization.yml') as f:
     roles = yaml.safe_load(f)
 
-authz = Authorizer(roles=roles)
+authz = Authorizer(permissions=roles)
 ```
 
 Since *authoritah* is not bound to any authentication or identity
@@ -208,7 +209,7 @@ You can now use a decorator to tell Authoritah that `article_user_roles` is the
 role provider for objects of type `Article`, or any subtype of it:
 ```python
 @authz.role_provider(Article)
-def article_user_roles(article, user):
+def article_user_roles(user, article):
     if user.id == article.created_by:
         return ['content_admin']
     return []
