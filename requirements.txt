@@ -4,4 +4,4 @@
 #
 #    pip-compile -U requirements.in -o requirements.txt --no-index
 #
-six==1.11.0
+six==1.12.0
