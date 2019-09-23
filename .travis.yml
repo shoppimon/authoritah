@@ -19,10 +19,11 @@ before_script:
 
 install:
   - pip install --upgrade pip
-  - pip install -r requirements-test.txt .
+  - pip install -r requirements.txt
+  - pip install -e .
 
 script:
-  - py.test --cov-report xml --cov=authoritah
+  - make test
 
 after_script:
   - ./cc-test-reporter after-build --coverage-input-type coverage.py --exit-code $TRAVIS_TEST_RESULT
