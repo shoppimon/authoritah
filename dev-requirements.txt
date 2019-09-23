@@ -4,21 +4,22 @@
 #
 #    pip-compile -U dev-requirements.in -o dev-requirements.txt --no-index
 #
-apipkg==1.5               # via execnet
+atomicwrites==1.3.0       # via pytest
 attrs==19.1.0             # via pytest
 coverage==4.5.4           # via pytest-cov
 entrypoints==0.3          # via flake8
-execnet==1.7.1            # via pytest-cache
 flake8==3.7.8             # via pytest-flake8
+importlib-metadata==0.23  # via pluggy
 isort==4.3.21             # via pytest-isort
 mccabe==0.6.1             # via flake8
-pluggy==0.6.0             # via pytest
+more-itertools==7.2.0     # via pytest, zipp
+pluggy==0.13.0            # via pytest
 py==1.8.0                 # via pytest
 pycodestyle==2.5.0        # via flake8
 pyflakes==2.1.1           # via flake8
-pytest-cache==1.0         # via pytest-isort
-pytest-cov==2.5.1
+pytest-cov==2.7.1
 pytest-flake8==0.9.1
-pytest-isort==0.1.0
-pytest==3.3.2
+pytest-isort==0.3.1
+pytest==3.10.1
 six==1.12.0               # via pytest
+zipp==0.6.0               # via importlib-metadata
