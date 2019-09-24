@@ -1,13 +1,23 @@
 Authoritah - Framework Agnostic Python RBAC Library
 ===================================================
-Authoritah is a Python 2.7 / 3.6 RBAC library. It is designed to be framework
+Authoritah is a Python RBAC library. It is designed to be framework
 agnostic, in the sense that it is not coupled with any Web framework or ORM
 library. In addition, Authoritah provides a highly granular role system using
 a unique approach of context-based role resolution.
 
 [![Build Status](https://travis-ci.org/shoppimon/authoritah.svg?branch=master)](https://travis-ci.org/shoppimon/authoritah)
 
-## Terminology
+## Compatibility 
+We test Authoritah on Python 3.5, 3.6, 3.7 and Pypy 3. It is possible that
+older versions of Authoritah will work with Python 2.7 as well, but Python 
+versions below 3.5 are not supported. 
+
+## Installation
+The easiest way to install Authoritah is via pip:
+
+    pip install authoritah 
+
+## Overview & Terminology
 The following terms are common in many authorization frameworks, but can have
 specific meaning in *authoritah* so it is important to clarify them first:
 
